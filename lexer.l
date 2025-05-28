@@ -1,22 +1,37 @@
-
- 
-
-
 %option noyywrap
 
 %{
-   #include <stdlib.h> 
-   #include <iostream>
-	#include "parser.tab.h"
+#include "parser.tab.h"
+#include <string>
+#include <cstring>
+
+using namespace std;
 %}
- 
+
+digit           [0-9]
+id              [a-zA-Z_][a-zA-Z0-9_]*
+ws              [ \t\r]+
+newline         \n
+
 %%
 
-[0-9]+         { /* int */ yylval =  atoi(/* char* */ yytext);  return NUMBER; } 
-"*"            return TIMES;
-"+"            return PLUS;
-=              return EQUAL;
-.              /* remove other characters */
-              
+"//".*                               
+"/*"([^*]|\*+[^/])*"*"+"/"              
+"int"           return INT;
+"double"        return DOUBLE;
+"const"         return CONST;
+"constexpr"     return CONSTEXPR;
+"&"             return REF;
+"&&"            return RVALREF;
+"*"             return STAR;
+"("             return LPAREN;
+")"             return RPAREN;
+","             return COMMA;
+";"             return SEMICOLON;
+"["{digit}*"]"  return ARRAY;
+{id}            return IDENTIFIER;
+{ws}            ;           // ignoruj białe znaki
+{newline}       return NEWLINE;
+.               return INVALID;
 
 %%

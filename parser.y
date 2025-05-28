@@ -1,41 +1,90 @@
-
 %{
-	#include <stdlib.h>
-	#include <stdio.h>
-	#include <iostream>
-	
-	void yyerror(char *s);
-	int yylex();
-	extern FILE* yyin;
+#include <iostream>
+#include <string>
 
-   int counter = 0;
-	
+using namespace std;
+
+void yyerror(const char* s);
+int yylex();
+int line_num = 1;
 %}
 
-%verbose 
+%token INT DOUBLE CONST CONSTEXPR REF RVALREF STAR LPAREN RPAREN COMMA SEMICOLON ARRAY IDENTIFIER INVALID NEWLINE
 
-%token PLUS TIMES NUMBER EQUAL
-	
 %%
 
-total      : expression EQUAL                {  std::cout <<  $1 << std::endl;   }
-           ;
+input:
+    /* empty */
+  | input line
+;
 
-expression : expression expression PLUS      {  $$ = $1 + $2;   }
-           | expression expression TIMES     {  $$ = $1 * $2;   } 
-           | NUMBER                          {  $$ = $1;   }
-           ;
-	
+line:
+    function_header SEMICOLON NEWLINE { cout << "line " << line_num++ << ": OK" << endl; }
+  | error NEWLINE                     { cout << "line " << line_num++ << ": ERROR" << endl; yyerrok; }
+  | NEWLINE                           { line_num++; /* pusta linia */ }
+;
+
+function_header:
+    type pointer_opt ref_opt IDENTIFIER LPAREN parameter_list_opt RPAREN
+;
+
+type:
+    modifiers base_type modifiers
+;
+
+modifiers:
+      /* empty */
+    | modifier modifiers
+;
+
+modifier:
+      CONST
+    | CONSTEXPR
+;
+
+base_type:
+      INT
+    | DOUBLE
+    | IDENTIFIER     // np. "constexp"
+;
+
+pointer_opt:
+    /* empty */
+  | pointer_opt STAR
+;
+
+ref_opt:
+    /* empty */
+  | REF
+  | RVALREF
+;
+
+parameter_list_opt:
+    /* empty */
+  | parameter_list
+;
+
+parameter_list:
+    parameter
+  | parameter_list COMMA parameter
+;
+
+parameter:
+    type pointer_opt ref_opt IDENTIFIER_opt array_opt
+;
+
+IDENTIFIER_opt:
+    /* empty */
+  | IDENTIFIER
+;
+
+array_opt:
+    /* empty */
+  | ARRAY
+;
+
 %%
 
-void yyerror(char *s) 
-{
-    fprintf(stderr, "%s\n", s);
-}
-
-int main() 
-{
-    std::ios_base::sync_with_stdio (true);
-    yyparse();    
-    return 0;
+void yyerror(const char* s) {
+    //cerr << "Syntax error in line " << line_num << ": " << s << endl;
 }
